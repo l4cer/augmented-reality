@@ -2,7 +2,7 @@ import cv2
 
 import numpy as np
 
-from typing import Tuple
+from typing import Tuple, List
 
 
 def extract_contours(image: np.ndarray, min_length: float = 40.0) -> np.ndarray:
@@ -25,13 +25,10 @@ def extract_contours(image: np.ndarray, min_length: float = 40.0) -> np.ndarray:
 
 def improve_contour(contour: np.ndarray, corners: np.ndarray, max_dist: float = 10.0) -> None:
     for index, corner in enumerate(contour):
-        delta = corners - corner
+        distances = np.linalg.norm(corners - corner, axis=1)
+        argmin = np.argmin(distances)
 
-        # Squared distances between all corners and contour corner
-        squared = np.einsum("ij,ij->i", delta, delta)
-        argmin = np.argmin(squared)
-
-        if np.sqrt(squared[argmin]) < max_dist:
+        if distances[argmin] < max_dist:
             contour[index] = corners[argmin]
 
 
@@ -92,42 +89,20 @@ def decode_marker(image: np.ndarray, contour: np.ndarray) -> Tuple[int, int]:
     return None, None
 
 
-def pose_estimation(image: np.ndarray, contour: np.ndarray) -> np.ndarray:
-    return np.eye(4)
+def extract_markers(image: np.ndarray) -> List[Tuple[int, np.ndarray]]:
+    theta = cv2.cornerHarris(image, 2, 3, 0.04)
 
-
-def main(filename: str, debug: bool = True) -> None:
-    image = cv2.imread(filename)
-    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-
-    theta = cv2.cornerHarris(gray, 2, 3, 0.04)
     j, i = np.where(theta > 0.01 * np.max(theta))
     corners = np.concatenate((i[:, np.newaxis], j[:, np.newaxis]), axis=1)
 
-    contours = extract_contours(gray)
-
-    for contour in contours:
+    markers = []
+    for contour in extract_contours(image):
         improve_contour(contour, corners)
 
-        number, rotation = decode_marker(gray, contour)
+        number, rotation = decode_marker(image, contour)
         if number is None:
             continue
 
-        contour = np.roll(contour, rotation, axis=0)
-        center = np.round(np.mean(contour, axis=0)).astype(int)
+        markers.append((number, np.roll(contour, rotation, axis=0)))
 
-        if debug:
-            cv2.drawContours(image, [contour], -1, (0, 0, 255), 2)
-            cv2.circle(image, contour[0], 2, (0, 255, 0), -1)
-            image = cv2.putText(
-                image, str(number), center, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
-
-    if debug:
-        cv2.imshow("Markers", image)
-        cv2.waitKey(0)
-
-
-if __name__ == "__main__":
-    main("images/aruco2.jpg", debug=True)
-    main("images/aruco3.png", debug=True)
-    main("images/aruco4.jpg", debug=True)
+    return markers
