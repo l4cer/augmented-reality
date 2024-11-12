@@ -113,6 +113,5 @@ def compute_pose(contour: np.ndarray, k: float) -> np.ndarray:
     pose[:3, 2] = pose[:3, 2] /np.linalg.norm(pose[:3, 2])
 
     pose[:3, 3] = np.mean(points, axis=0)
-    pose[:3, :3] = 0.5 * pose[:3, :3]
 
     return pose

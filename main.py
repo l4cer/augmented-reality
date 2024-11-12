@@ -17,7 +17,7 @@ def draw_guizmo(image: np.ndarray, pose: np.ndarray, f: float) -> np.ndarray:
         color = [(0,0,180), (0,180,0), (180,0,0)][i]
 
         pi = Ki @ pose[:3, 3]
-        pf = Ki @ (pose[:3, 3] + pose[:3, i])
+        pf = Ki @ (pose[:3, 3] + 0.5 * pose[:3, i])
 
         pi = np.round(pi / pi[2]).astype(int)[:2]
         pf = np.round(pf / pf[2]).astype(int)[:2]
