@@ -3,7 +3,7 @@ import numpy as np
 from typing import List
 
 
-def quadratic_solver(a: float, b: float, c: float) -> List[float]:
+def quadratic_solver(a: float, b: float, c: float, tol: float = 0.5) -> List[float]:
     if np.isclose(a, 0):
         if np.isclose(b, 0):
             return []
@@ -17,6 +17,9 @@ def quadratic_solver(a: float, b: float, c: float) -> List[float]:
         return [-b / 2]
 
     if delta < 0:
+        if -delta / 4 < tol:
+            return [-b / 2]
+
         return []
 
     return [(-b + np.sqrt(delta)) / 2, (-b - np.sqrt(delta)) / 2]
@@ -37,8 +40,8 @@ def compute_score(points: np.ndarray) -> float:
     return score
 
 
-def pnp_solver(contour: np.ndarray, k: float) -> np.ndarray:
-    proj = np.array([[k * x - 1, k * y - 1, 1] for x, y in contour])
+def pnp_solver(contour: np.ndarray, f: float) -> np.ndarray:
+    proj = np.array([[f * x - 1, f * y - 1, 1] for x, y in contour])
     proj = proj / np.linalg.norm(proj, axis=1, keepdims=True)
 
     b = np.eye(4)
@@ -93,14 +96,14 @@ def pnp_solver(contour: np.ndarray, k: float) -> np.ndarray:
     return solution
 
 
-def compute_pose(contour: np.ndarray, k: float) -> np.ndarray:
-    points = pnp_solver(contour, k)
+def compute_pose(contour: np.ndarray, f: float) -> np.ndarray:
+    points = pnp_solver(contour, f)
 
     if points is None:
         return None
 
-    u = points[3] - points[0]
-    v = points[1] - points[0]
+    u = points[2] - points[1]
+    v = points[2] - points[3]
 
     # Gram–Schmidt process
     v -= u * np.dot(v, u) / np.dot(u, u)
@@ -109,8 +112,8 @@ def compute_pose(contour: np.ndarray, k: float) -> np.ndarray:
     pose[:3, 0] = u / np.linalg.norm(u)
     pose[:3, 1] = v / np.linalg.norm(v)
 
-    pose[:3, 2] = np.cross(pose[:3, 0], pose[:3, 1])
-    pose[:3, 2] = pose[:3, 2] /np.linalg.norm(pose[:3, 2])
+    cross = np.cross(u, v)
+    pose[:3, 2] = cross / np.linalg.norm(cross)
 
     pose[:3, 3] = np.mean(points, axis=0)
 

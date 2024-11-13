@@ -53,6 +53,9 @@ def decode_marker(image: np.ndarray, contour: np.ndarray) -> Tuple[int, int]:
 
     H, _ = cv2.findHomography(points_A, points_B, cv2.RANSAC, 4.0)
 
+    if H is None:
+        return None, None
+
     kwargs = {
         "borderMode": cv2.BORDER_TRANSPARENT,
         "flags": cv2.INTER_LINEAR
