@@ -9,15 +9,15 @@ from pose import compute_pose
 def draw_axes(frame: np.ndarray, pose: np.ndarray) -> np.ndarray:
     f = 2 / max(*frame.shape)
 
-    Ki = np.linalg.inv(np.array([[ f,  0, -1],
-                                 [ 0,  f, -1],
-                                 [ 0,  0,  1]]))
+    K = np.linalg.inv(np.array([[ f,  0, -1],
+                                [ 0,  f, -1],
+                                [ 0,  0,  1]]))
 
     for i in range(3):
         color = [(0, 0, 180), (0, 180, 0), (180, 0, 0)][i]
 
-        pi = Ki @ pose[:3, 3]
-        pf = Ki @ pose[:3, i] * 0.5 + pi
+        pi = K @ pose[:3, 3]
+        pf = K @ pose[:3, i] * 0.5 + pi
 
         pi = np.round(pi / pi[2]).astype(int)[:2]
         pf = np.round(pf / pf[2]).astype(int)[:2]
@@ -30,19 +30,19 @@ def draw_axes(frame: np.ndarray, pose: np.ndarray) -> np.ndarray:
 def draw_box(frame: np.ndarray, pose: np.ndarray) -> np.ndarray:
     f = 2 / max(*frame.shape)
 
-    Ki = np.linalg.inv(np.array([[ f,  0, -1],
-                                 [ 0,  f, -1],
-                                 [ 0,  0,  1]]))
+    K = np.linalg.inv(np.array([[ f,  0, -1],
+                                [ 0,  f, -1],
+                                [ 0,  0,  1]]))
 
-    p1 = Ki @ (pose[:3, 3] - 0.5 * pose[:3, 1] - 0.5 * pose[:3, 0])
-    p2 = Ki @ (pose[:3, 3] + 0.5 * pose[:3, 1] - 0.5 * pose[:3, 0])
-    p3 = Ki @ (pose[:3, 3] + 0.5 * pose[:3, 1] + 0.5 * pose[:3, 0])
-    p4 = Ki @ (pose[:3, 3] - 0.5 * pose[:3, 1] + 0.5 * pose[:3, 0])
+    p1 = K @ (pose[:3, 3] - 0.5 * pose[:3, 1] - 0.5 * pose[:3, 0])
+    p2 = K @ (pose[:3, 3] + 0.5 * pose[:3, 1] - 0.5 * pose[:3, 0])
+    p3 = K @ (pose[:3, 3] + 0.5 * pose[:3, 1] + 0.5 * pose[:3, 0])
+    p4 = K @ (pose[:3, 3] - 0.5 * pose[:3, 1] + 0.5 * pose[:3, 0])
 
-    p5 = Ki @ pose[:3, 2] + p1
-    p6 = Ki @ pose[:3, 2] + p2
-    p7 = Ki @ pose[:3, 2] + p3
-    p8 = Ki @ pose[:3, 2] + p4
+    p5 = K @ pose[:3, 2] + p1
+    p6 = K @ pose[:3, 2] + p2
+    p7 = K @ pose[:3, 2] + p3
+    p8 = K @ pose[:3, 2] + p4
 
     p = [p1, p2, p3, p4, p5, p6, p7, p8]
     p = [np.round(pi / pi[2]).astype(int)[:2] for pi in p]
@@ -63,6 +63,7 @@ def process_frame(frame: np.ndarray, debug: bool = False) -> np.ndarray:
 
     for number, contour in extract_markers(gray):
         pose = compute_pose(contour, f)
+        contour = np.round(contour).astype(int)
 
         if debug:
             cv2.drawContours(frame, [contour], -1, (0, 0, 255), 1)

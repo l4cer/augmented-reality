@@ -23,7 +23,11 @@ def extract_contours(image: np.ndarray, min_length: float = 40.0) -> np.ndarray:
     return np.asarray(filtered)
 
 
-def improve_contour(contour: np.ndarray, corners: np.ndarray, max_dist: float = 10.0) -> None:
+def improve_contour(image: np.ndarray,
+                    contour: np.ndarray,
+                    corners: np.ndarray,
+                    max_dist: float = 10.0) -> np.ndarray:
+
     for index, corner in enumerate(contour):
         distances = np.linalg.norm(corners - corner, axis=1)
         argmin = np.argmin(distances)
@@ -31,10 +35,19 @@ def improve_contour(contour: np.ndarray, corners: np.ndarray, max_dist: float = 
         if distances[argmin] < max_dist:
             contour[index] = corners[argmin]
 
+    win_size = (5, 5)
+    zero_zone = (-1, -1)
+
+    # Termination criteria
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
+
+    return cv2.cornerSubPix(
+        image, np.float32(contour), win_size, zero_zone, criteria)
+
 
 def decode_marker(image: np.ndarray, contour: np.ndarray) -> Tuple[int, int]:
-    minimum = np.min(contour, axis=0)
-    maximum = np.max(contour, axis=0)
+    minimum = np.round(np.min(contour, axis=0)).astype(int)
+    maximum = np.round(np.max(contour, axis=0)).astype(int)
 
     size = max(maximum - minimum) + 1
 
@@ -100,7 +113,7 @@ def extract_markers(image: np.ndarray) -> List[Tuple[int, np.ndarray]]:
 
     markers = []
     for contour in extract_contours(image):
-        improve_contour(contour, corners)
+        contour = improve_contour(image, contour, corners)
 
         number, rotation = decode_marker(image, contour)
         if number is None:
