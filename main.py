@@ -13,6 +13,10 @@ model_paths = [
     "3d_models/scad_chess_pawn.stl",
     "3d_models/scad_chess_queen.stl",
     "3d_models/scad_chess_rook.stl",
+    "3d_models/scad_chess_rook.stl",
+    "3d_models/scad_chess_rook.stl",
+    "3d_models/scad_chess_rook.stl",
+    "3d_models/scad_chess_rook.stl",
     "3d_models/Jolteon.stl",
 ]
 
@@ -132,6 +136,6 @@ def main(device: int, debug: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    # test_model("3d_models/scad_chess_queen.stl")
+    test_model("3d_models/Jolteon.stl")
     main(0, debug=True)
     # main(0, debug=False)
