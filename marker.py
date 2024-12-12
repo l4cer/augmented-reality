@@ -57,6 +57,9 @@ def decode_marker(image: np.ndarray, contour: np.ndarray) -> Tuple[int, int]:
     yi, yf = minimum[0], min(minimum[0] + size, image.shape[1])
 
     cropped = image[xi:xf, yi:yf]
+    if cropped is None or cropped.size == 0: # Prevent crashing if cropped empty
+        return None, None
+
 
     points_A = np.array(contour - minimum, dtype=np.float32)
     points_B = np.array([[   0,    0],

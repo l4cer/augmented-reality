@@ -4,6 +4,17 @@ import numpy as np
 
 from marker import extract_markers
 from pose import compute_pose
+from render import *
+
+model_paths = [
+    "3d_models/scad_chess_bishop.stl",
+    "3d_models/scad_chess_king.stl",
+    "3d_models/scad_chess_knight.stl",
+    "3d_models/scad_chess_pawn.stl",
+    "3d_models/scad_chess_queen.stl",
+    "3d_models/scad_chess_rook.stl",
+    "3d_models/Jolteon.stl",
+]
 
 
 def draw_axes(frame: np.ndarray, pose: np.ndarray) -> np.ndarray:
@@ -56,14 +67,19 @@ def draw_box(frame: np.ndarray, pose: np.ndarray) -> np.ndarray:
     return frame
 
 
-def process_frame(frame: np.ndarray, debug: bool = False) -> np.ndarray:
+def process_frame(frame: np.ndarray, objects : np.ndarray , debug: bool = False) -> np.ndarray:
     gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
 
     f = 2 / max(*frame.shape)
 
     for number, contour in extract_markers(gray):
-        pose = compute_pose(contour, f)
+        pose, rvec, tvec = compute_pose(contour, f)
+        cameraMatrix = np.linalg.inv(np.array([[ f,  0, -1],
+                                                [ 0,  f, -1],
+                                                [ 0,  0,  1]]))
+
         contour = np.round(contour).astype(int)
+        distortion_coeffs = np.zeros(4) 
 
         if debug:
             cv2.drawContours(frame, [contour], -1, (0, 0, 255), 1)
@@ -74,12 +90,25 @@ def process_frame(frame: np.ndarray, debug: bool = False) -> np.ndarray:
             if pose is not None:
                 frame = draw_box(frame, pose)
                 frame = draw_axes(frame, pose)
+        
+        if number > 7 :
+            print(number)
+            break
+        else :
+            points, colors = objects[number]
+            image_points , _ = cv2.projectPoints(points , rvec, tvec, cameraMatrix, distortion_coeffs)
+
+            for k in range(len(image_points)):
+                color = tuple([int(colors[k][i]) for i in range(4)])
+                center = tuple(np.round(image_points[k].ravel()).astype(int)) 
+                cv2.circle(frame, center, 3, color, -1)
 
     return frame
 
 
 def main(device: int, debug: bool = False) -> None:
     cap = cv2.VideoCapture(device)
+    objects = [load_model(path) for path in model_paths]
 
     if not cap.isOpened():
         print("Cannot open camera")
@@ -92,7 +121,7 @@ def main(device: int, debug: bool = False) -> None:
             print("Can't receive frame. Exiting...")
             break
 
-        frame = process_frame(frame, debug=debug)
+        frame = process_frame(frame, objects, debug=debug)
         cv2.imshow("frame", frame)
 
         if cv2.waitKey(1) == ord("q"):
@@ -103,4 +132,6 @@ def main(device: int, debug: bool = False) -> None:
 
 
 if __name__ == "__main__":
+    # test_model("3d_models/scad_chess_queen.stl")
     main(0, debug=True)
+    # main(0, debug=False)

@@ -29,4 +29,4 @@ def compute_pose(points_2D: np.ndarray, f: float) -> np.ndarray:
     pose[:3, 0] = -v
     pose[:3, 1] =  u
 
-    return pose
+    return pose, rvec, tvec
