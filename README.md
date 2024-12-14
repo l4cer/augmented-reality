@@ -13,7 +13,7 @@ source venv/bin/activate  # Linux
 pip install -r requirements.txt
 ```
 
-- All models used by default in the code are available on [https://www.thingiverse.com/](thingiverse.com)
+- All models used by default in the code are available on [thingiverse.com](https://www.thingiverse.com/)
 - The program has only been tested with .stl files
 
 ## Execute
