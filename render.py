@@ -40,7 +40,8 @@ def load_model(path):
     # Convert vertices into the required format for cv2.projectPoints
     points_3d = vertices.reshape(-1, 1, 3)  # Shape: (N, 1, 3)
 
-    # Extract faces
+    # Extract faces and normals
     faces = model.faces
+    normals = model.face_normals
     
-    return points_3d, faces , colors
+    return points_3d, faces, normals , colors

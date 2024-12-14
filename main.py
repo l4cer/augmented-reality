@@ -1,5 +1,5 @@
 import cv2
-
+import sys
 import numpy as np
 
 from marker import extract_markers
@@ -71,7 +71,7 @@ def draw_box(frame: np.ndarray, pose: np.ndarray) -> np.ndarray:
     return frame
 
 
-def process_frame(frame: np.ndarray, objects : np.ndarray , debug: bool = False) -> np.ndarray:
+def process_frame(frame: np.ndarray, objects : np.ndarray , debug: bool = False, displayToggle = [True, True]) -> np.ndarray:
     gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
 
     f = 2 / max(*frame.shape)
@@ -84,6 +84,7 @@ def process_frame(frame: np.ndarray, objects : np.ndarray , debug: bool = False)
 
         contour = np.round(contour).astype(int)
         distortion_coeffs = np.zeros(4) 
+        light_pos = np.array([0, 0, 0]) 
 
         if debug:
             cv2.drawContours(frame, [contour], -1, (0, 0, 255), 1)
@@ -98,20 +99,40 @@ def process_frame(frame: np.ndarray, objects : np.ndarray , debug: bool = False)
         if number > 8 :
             continue
         else :
-            points, faces, colors = objects[number]
+            points, faces, normals, colors = objects[number]
             image_points, _ = cv2.projectPoints(points , rvec, tvec, cameraMatrix, distortion_coeffs)
 
-            for k in range(len(image_points)):
-                color = tuple([int(colors[k][i]) for i in range(4)])
-                points = image_points[faces[k]].astype(int)
-                cv2.fillConvexPoly(frame, points, color)
-                # center = tuple(np.round(image_points[k].ravel()).astype(int)) 
-                # cv2.circle(frame, center, 3, color, -1)
+            if displayToggle[0]:
+                for k in range(len(image_points)):
+                    color = tuple([int(colors[k][i]) for i in range(4)])
+                    center = tuple(np.round(image_points[k].ravel()).astype(int)) 
+                    cv2.circle(frame, center, 3, color, -1)
 
+            if displayToggle[1]:
+                # Compute light direction for each face
+                face_centers = np.mean(points[faces], axis=1) 
+                light_directions = light_pos - face_centers 
+                light_directions /= np.linalg.norm(light_directions, axis=1, keepdims=True) + 1e-8
+                light_directions = light_directions.reshape(-1, 3)
+
+                # Calculate diffuse intensity
+                intensities = np.maximum(0, np.einsum('ij,ij->i', normals, light_directions))
+                intensities = np.nan_to_num(intensities, nan=0.0)  
+                intensities = 255 * intensities
+
+
+
+                for k in range(len(image_points)):
+                    vcolor = int(intensities[k])
+                    color = (vcolor, vcolor, vcolor)
+                    points = image_points[faces[k]].astype(int)
+                    #cv2.fillConvexPoly(frame, points, color)
+                    cv2.fillPoly(frame, [points], color)
+                   
     return frame
 
 
-def main(device: int, debug: bool = False) -> None:
+def main(device: int, debug: bool = False, displayToggle = [True, True]) -> None:
     cap = cv2.VideoCapture(device)
     objects = [load_model(path) for path in model_paths]
 
@@ -126,7 +147,7 @@ def main(device: int, debug: bool = False) -> None:
             print("Can't receive frame. Exiting...")
             break
 
-        frame = process_frame(frame, objects, debug=debug)
+        frame = process_frame(frame, objects, debug=debug, displayToggle=displayToggle)
         cv2.imshow("frame", frame)
 
         if cv2.waitKey(1) == ord("q"):
@@ -137,6 +158,48 @@ def main(device: int, debug: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    # test_model("3d_models/Jolteon.stl")
-    main(0, debug=True)
-    # main(0, debug=False)
+
+
+    # Default
+    testModel = False
+    debug = False
+    show_vertex = True
+    show_polygon = False
+    path = ""
+
+    for arg in sys.argv[1:]:
+        if arg == "-h":
+            print("""
+Usage: python main.py [options]
+
+Options:
+  -h                Show this help message and exit
+  --debug           Display contours and axes
+  --noVertex        Disable vertex rendering
+  --polygon         Enable polygon rendering
+  --testModel       Display the 1st model before launching the camera
+  --path=<path>     Specify a custom path to a 3D model file. 
+                    Replaces the first default model in the list.
+
+Examples:
+  python main.py --debug --polygon --path="3d_models/my_model.stl"
+  python main.py --testModel --noVertex
+    """)
+            exit(0)
+        elif arg == "--debug":
+            debug = True
+        elif arg == "--noVertex":
+            show_vertex = False
+        elif arg == "--polygon":
+            show_polygon = True
+        elif arg == "--testModel":
+            testModel = True
+        elif arg.startswith("--path="):
+            path = arg.split("=", 1)[1] 
+            model_paths[0] = path # replace the first model by the one provided
+
+    displayToggle = [show_vertex, show_polygon]
+
+    if testModel:
+        test_model("3d_models/Jolteon.stl")
+    main(0, debug, displayToggle)
