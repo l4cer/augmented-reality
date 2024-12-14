@@ -116,6 +116,8 @@ def extract_markers(image: np.ndarray) -> List[Tuple[int, np.ndarray]]:
 
     markers = []
     for contour in extract_contours(image):
+        if corners.size == 0 :
+            continue
         contour = improve_contour(image, contour, corners)
 
         number, rotation = decode_marker(image, contour)

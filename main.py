@@ -95,17 +95,18 @@ def process_frame(frame: np.ndarray, objects : np.ndarray , debug: bool = False)
                 frame = draw_box(frame, pose)
                 frame = draw_axes(frame, pose)
         
-        if number > 7 :
-            print(number)
-            break
+        if number > 8 :
+            continue
         else :
-            points, colors = objects[number]
-            image_points , _ = cv2.projectPoints(points , rvec, tvec, cameraMatrix, distortion_coeffs)
+            points, faces, colors = objects[number]
+            image_points, _ = cv2.projectPoints(points , rvec, tvec, cameraMatrix, distortion_coeffs)
 
             for k in range(len(image_points)):
                 color = tuple([int(colors[k][i]) for i in range(4)])
-                center = tuple(np.round(image_points[k].ravel()).astype(int)) 
-                cv2.circle(frame, center, 3, color, -1)
+                points = image_points[faces[k]].astype(int)
+                cv2.fillConvexPoly(frame, points, color)
+                # center = tuple(np.round(image_points[k].ravel()).astype(int)) 
+                # cv2.circle(frame, center, 3, color, -1)
 
     return frame
 
@@ -136,6 +137,6 @@ def main(device: int, debug: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    test_model("3d_models/Jolteon.stl")
+    # test_model("3d_models/Jolteon.stl")
     main(0, debug=True)
     # main(0, debug=False)
