@@ -25,11 +25,10 @@ Examples:
 
 models = {
     0: Model("models/chess_bishop.stl", 0.03),
-    1: Model("models/chess_king.stl",   0.03),
-    2: Model("models/chess_knight.stl", 0.03),
+    1: Model("models/chess_rook.stl",   0.03),
+    2: Model("models/chess_queen.stl",  0.03),
     7: Model("models/chess_pawn.stl",   0.03),
-    8: Model("models/chess_queen.stl",  0.03),
-    9: Model("models/chess_rook.stl",   0.03)
+    9: Model("models/chess_king.stl",   0.03)
 }
 
 
@@ -71,6 +70,8 @@ def main(device: int, debug: bool = False) -> None:
     ret, frame = cap.read()
     for model in models.values():
         model.set_intrinsic_matrix(2 / max(*frame.shape))
+
+    print("Press \33[34mQ\33[0m to quit")
 
     while True:
         ret, frame = cap.read()
