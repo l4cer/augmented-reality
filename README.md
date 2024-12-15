@@ -4,6 +4,8 @@ Augmented Reality (almost) from scratch
 
 ## Install
 
+To clone the project and install the dependencies, run the following commands:
+
 ```bash
 git clone git@github.com:l4cer/augmented-reality.git
 cd augmented-reality
@@ -13,35 +15,34 @@ source venv/bin/activate  # Linux
 pip install -r requirements.txt
 ```
 
-- All models used by default in the code are available on [thingiverse.com](https://www.thingiverse.com/)
-- The program has only been tested with .stl files
-
 ## Execute
 
-- Connect your camera
-- launch the program
+To run the program, connect your camera and execute the following command:
 
 ```
 python main.py [options]
 ```
-- Show to the camera one or more QR codes from the ./images folder (either printed or on your phone) and a 3D model should appear above!
 
-- All options are optional, by default the program displays the vertices of the models stored in the folder 3d_models which match the number of the detected QR code.
+### Usage
 
-```
-Options:
-  -h                Show this help message and exit
-  --debug           Display contours and axes
-  --noVertex        Disable vertex rendering
-  --polygon         Enable polygon rendering
-  --testModel       Display the 1st model before launching the camera
-  --path=<path>     Specify a custom path to a 3D model file. 
-                    Replaces the first default model in the list.
-```
+Show to the camera one or more ArUco from the `markers` folder (these can be either printed or displayed on a screen, such as your phone). A 3D model should appear over the detected markers!
 
-### Examples:
+By default, the program uses the first video capture device (device 0). If needed, you can customize the behavior using the options below.
+
+### Options
 
 ```
-python main.py --debug --polygon --path="3d_models/my_model.stl"
-python main.py --testModel --noVertex
+-h                 Display this help message and exit.
+--debug            Enable debug mode to visualize contours and axes.
+--device=<int>     Specify the video capture device index.
+```
+
+⚠️ **Note:** if you experience issues with the default camera device, use the `--device` option to specify a different camera index.
+
+### Examples
+
+```
+python main.py
+python main.py --debug
+python main.py --device=0
 ```

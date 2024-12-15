@@ -1,8 +1,4 @@
-numpy < 2
-opencv-python
-
-# for loading 3D models
-trimesh
-pyglet < 2
-scipy
-networkx
+numpy==1.23.3
+opencv-python==4.7.0.72
+pyglet==1.5.30
+trimesh==4.5.3
