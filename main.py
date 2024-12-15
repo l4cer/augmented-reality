@@ -102,15 +102,21 @@ def process_frame(frame: np.ndarray, objects : np.ndarray , debug: bool = False,
             points, faces, normals, colors = objects[number]
             image_points, _ = cv2.projectPoints(points , rvec, tvec, cameraMatrix, distortion_coeffs)
 
+            # display vertices
             if displayToggle[0]:
                 for k in range(len(image_points)):
                     color = tuple([int(colors[k][i]) for i in range(4)])
                     center = tuple(np.round(image_points[k].ravel()).astype(int)) 
                     cv2.circle(frame, center, 3, color, -1)
 
+            # display filled polygons
             if displayToggle[1]:
                 # Compute light direction for each face
-                face_centers = np.mean(points[faces], axis=1) 
+                rotation_matrix, _ = cv2.Rodrigues(rvec)  
+                points = points.reshape(-1, 3) 
+                points_camera_space = (rotation_matrix @ points.T).T + tvec.T  
+
+                face_centers = np.mean(points_camera_space[faces], axis=1) 
                 light_directions = light_pos - face_centers 
                 light_directions /= np.linalg.norm(light_directions, axis=1, keepdims=True) + 1e-8
                 light_directions = light_directions.reshape(-1, 3)
